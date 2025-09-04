@@ -20,7 +20,7 @@ func SendOtpToken(d *config.Deps) gin.HandlerFunc {
 		var reqBody types.SendOtpEmailBody
 
 		if err := ctx.ShouldBindJSON(&reqBody); err != nil {
-			config.ErrorLogger.Printf("error binding request: %v\n", err.Error())
+			config.ErrorLogger.Printf("error while binding request: %v\n", err.Error())
 
 			ctx.JSON(http.StatusBadRequest, gin.H{
 				"message": "Something went wrong, please try again",
@@ -143,11 +143,33 @@ func Register(d *config.Deps) gin.HandlerFunc {
 			Password:        string(hashed),
 		}
 
-		if err := d.Models.Users.CreateUser(&user); err != nil {
+		res, err := d.Models.Users.CreateUser(&user)
+
+		if err != nil {
 			config.ErrorLogger.Printf("error creating user: %v\n", err.Error())
 
 			ctx.JSON(http.StatusInternalServerError, gin.H{
 				"message": "Failed to create account, please try again",
+			})
+			return
+		}
+
+		// CREATE WALLET FOR USER
+		walletIdInt := config.GenerateWalletID()
+
+		walletId := strconv.Itoa(walletIdInt)
+
+		wallet := models.Wallet{
+			UserID:        res.ID,
+			WalletBalance: 0,
+			WalletID:      walletId,
+		}
+
+		if err := d.Models.Wallets.CreateWallet(&wallet); err != nil {
+			config.ErrorLogger.Printf("error creating wallet: %v\n", err.Error())
+
+			ctx.JSON(http.StatusInternalServerError, gin.H{
+				"message": "Something went wrong",
 			})
 			return
 		}
@@ -170,12 +192,12 @@ func Login(d *config.Deps) gin.HandlerFunc {
 			return
 		}
 
-		// Get user with email
-		user, err := d.Models.Users.GetUserWithEmail(reqBody.Email)
+		// Get user with email or phone number
+		user, err := d.Models.Users.GetUserWithEmailOrPhone(reqBody.Email, reqBody.PhoneNumber)
 
 		if err != nil {
 			ctx.JSON(http.StatusConflict, gin.H{
-				"message": "Invalid email or password",
+				"message": "Invalid email or phone number",
 			})
 			return
 		}
@@ -184,7 +206,7 @@ func Login(d *config.Deps) gin.HandlerFunc {
 		err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(reqBody.Password))
 
 		if err != nil {
-			ctx.JSON(http.StatusUnauthorized, gin.H{
+			ctx.JSON(http.StatusConflict, gin.H{
 				"message": "Invalid email or password",
 			})
 			return
@@ -247,9 +269,10 @@ func Refresh(d *config.Deps) gin.HandlerFunc {
 		}
 
 		// CREATE NEW ACCESS TOKEN
-		newAccessToken, err := config.GenerateAuthToken(claims["user_id"].(float64))
+		newAccessToken, err1 := config.GenerateAuthToken(claims["user_id"].(float64))
+		newRefreshToken, err2 := config.GenerateRefreshToken(claims["user_id"].(float64))
 
-		if err != nil {
+		if err1 != nil || err2 != nil {
 			config.ErrorLogger.Printf("error generating token: %v\n", err)
 
 			ctx.JSON(http.StatusInternalServerError, gin.H{
@@ -259,7 +282,8 @@ func Refresh(d *config.Deps) gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusOK, gin.H{
-			"access_token": newAccessToken,
+			"access_token":  newAccessToken,
+			"refresh_token": newRefreshToken,
 		})
 	}
 }

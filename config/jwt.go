@@ -10,7 +10,7 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
-func GenerateRefreshToken(userID uint) (string, error) {
+func GenerateRefreshToken(userID any) (string, error) {
 	return jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id": userID,
 		"type":    "refresh",

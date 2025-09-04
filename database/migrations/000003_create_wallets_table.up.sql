@@ -1,0 +1,11 @@
+CREATE TABLE
+    IF NOT EXISTS wallets (
+        id BIGINT AUTO_INCREMENT PRIMARY KEY,
+        user_id BIGINT NOT NULL,
+        wallet_balance DECIMAL(19, 4) DEFAULT 0 NOT NULL,
+        wallet_id VARCHAR(50) NULL,
+        currency VARCHAR(20) DEFAULT "NGN",
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        CONSTRAINT fk_wallets_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+    );

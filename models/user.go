@@ -19,12 +19,13 @@ type User struct {
 	Email           string `json:"email"`
 	EmailVerifiedAt string `json:"email_verified_at"`
 	PhoneNumber     string `json:"phone_number"`
+	Pin             string `json:"pin"`
 	Password        string `json:"-"`
 	CreatedAt       string `json:"created_at"`
 	UpdatedAt       string `json:"updated_at"`
 }
 
-func (m *UserModel) CreateUser(user *User) error {
+func (m *UserModel) CreateUser(user *User) (*User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
@@ -32,16 +33,34 @@ func (m *UserModel) CreateUser(user *User) error {
 	(first_name, last_name, email, email_verified_at, phone_number, password) 
 	VALUES (?,?,?,?,?,?)
 	`
-	_, err := m.DB.ExecContext(ctx, query, user.FirstName, user.LastName, user.Email, user.EmailVerifiedAt, user.PhoneNumber, user.Password)
+	var result User
+
+	res, err := m.DB.ExecContext(ctx, query, user.FirstName, user.LastName, user.Email, user.EmailVerifiedAt, user.PhoneNumber, user.Password)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	id, _ := res.LastInsertId()
+
+	err = m.DB.QueryRowContext(ctx, `SELECT id, first_name, last_name, email, phone_number, created_at, updated_at FROM users WHERE id = ?`, id).Scan(
+		&result.ID,
+		&result.FirstName,
+		&result.LastName,
+		&result.Email,
+		&result.PhoneNumber,
+		&result.CreatedAt,
+		&result.UpdatedAt,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &result, nil
 }
 
-func (m *UserModel) GetUserWithEmail(email string) (*User, error) {
+func (m *UserModel) GetUserWithEmailOrPhone(email, phone string) (*User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
@@ -49,12 +68,13 @@ func (m *UserModel) GetUserWithEmail(email string) (*User, error) {
 		SELECT id, first_name, last_name, email, password, phone_number, created_at, updated_at
 		FROM users 
 		WHERE email = ?
+		OR phone_number = ?
 		LIMIT 1
 	`
 
 	var user User
 
-	err := m.DB.QueryRowContext(ctx, query, email).Scan(
+	err := m.DB.QueryRowContext(ctx, query, email, phone).Scan(
 		&user.ID,
 		&user.FirstName,
 		&user.LastName,
@@ -106,4 +126,22 @@ func (m *UserModel) GetUserById(id uint) (*User, error) {
 	}
 
 	return &user, nil
+}
+
+func (m *UserModel) CreateUserPin(userID uint, pin string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := `UPDATE users SET 
+	pin = ?, 
+	has_pin = ? 
+	WHERE id = ?`
+
+	err := m.DB.QueryRowContext(ctx, query, pin, true, userID).Err()
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

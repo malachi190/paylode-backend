@@ -55,15 +55,17 @@ func main() {
 		Redis:  rdb,
 	}
 
+	// TODO: Implement rate limiting using redis
+
 	// SET UP ROUTES
 	router := routes.Router(deps)
 
 	// SET UP SERVER OPTIONS
-	Port := os.Getenv("PORT")
+	port := os.Getenv("PORT")
 
-	Addr := fmt.Sprintf("localhost:%v", Port)
+	addr := "0.0.0.0:" + port
 
-	if err := router.Run(Addr); err != nil {
+	if err := router.Run(addr); err != nil {
 		log.Fatal(err)
 	}
 }

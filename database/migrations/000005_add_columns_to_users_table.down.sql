@@ -1,0 +1,3 @@
+ALTER TABLE users
+DROP COLUMN pin,
+DROP COLUMN has_pin;

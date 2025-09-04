@@ -1,0 +1,2 @@
+ALTER TABLE transactions 
+ADD COLUMN amount DECIMAL(19, 2) NOT NULL;

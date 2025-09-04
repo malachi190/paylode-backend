@@ -18,7 +18,8 @@ type RegisterBody struct {
 }
 
 type LoginBody struct {
-	Email string `json:"email" binding:"required,email"`
+	Email       string `json:"email"`
+	PhoneNumber string `json:"phone_number"`
 	Password    string `json:"password" binding:"required,min=8"`
 }
 
