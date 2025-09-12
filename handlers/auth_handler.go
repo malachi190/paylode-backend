@@ -195,7 +195,7 @@ func Login(d *config.Deps) gin.HandlerFunc {
 		// Get user with email or phone number
 		user, err := d.Models.Users.GetUserWithEmailOrPhone(reqBody.Email, reqBody.PhoneNumber)
 
-		if err != nil {
+		if err != nil || user == nil {
 			ctx.JSON(http.StatusConflict, gin.H{
 				"message": "Invalid email or phone number",
 			})
@@ -206,6 +206,8 @@ func Login(d *config.Deps) gin.HandlerFunc {
 		err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(reqBody.Password))
 
 		if err != nil {
+			config.ErrorLogger.Printf("error while comparing hash: %v\n", err.Error())
+
 			ctx.JSON(http.StatusConflict, gin.H{
 				"message": "Invalid email or password",
 			})

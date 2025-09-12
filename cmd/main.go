@@ -6,6 +6,8 @@ import (
 	"log"
 	"os"
 
+	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis_rate/v10"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
 	"github.com/malachi190/paylode-backend/config"
@@ -19,7 +21,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// DECLARE MODELS
+	// INIT DB
 	dbUser := os.Getenv("DB_USERNAME")
 	dbPass := os.Getenv("DB_PASSWORD")
 	dbName := os.Getenv("DB_NAME")
@@ -55,10 +57,13 @@ func main() {
 		Redis:  rdb,
 	}
 
-	// TODO: Implement rate limiting using redis
+	// Implement rate limiting using redis
+	limiter := redis_rate.NewLimiter(rdb)
 
 	// SET UP ROUTES
-	router := routes.Router(deps)
+	g := gin.Default()
+
+	router := routes.Router(g, deps, limiter)
 
 	// SET UP SERVER OPTIONS
 	port := os.Getenv("PORT")

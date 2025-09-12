@@ -2,13 +2,14 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis_rate/v10"
 	"github.com/malachi190/paylode-backend/config"
 	"github.com/malachi190/paylode-backend/handlers"
 	"github.com/malachi190/paylode-backend/middleware"
 )
 
-func Router(d *config.Deps) *gin.Engine {
-	r := gin.Default()
+func Router(r *gin.Engine, d *config.Deps, limiter *redis_rate.Limiter) *gin.Engine {
+	r.Use(middleware.RateLimit(limiter))
 
 	// PLACE ROUTES HERE
 	auth := r.Group("/api/auth")
