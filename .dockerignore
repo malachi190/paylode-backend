@@ -1,0 +1,33 @@
+# git / CI
+.git
+.github
+.gitignore
+
+# env files with secrets
+.env
+.env.*
+
+# Go build artifacts
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+vendor/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Local logs / tmp
+*.log
+tmp/
