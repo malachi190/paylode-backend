@@ -1,6 +1,6 @@
 module github.com/malachi190/paylode-backend
 
-go 1.24.4
+go 1.22
 
 require (
 	github.com/go-sql-driver/mysql v1.9.3
