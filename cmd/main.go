@@ -26,8 +26,16 @@ func main() {
 	dbHost := os.Getenv("DB_HOST")
 	dbPort := os.Getenv("DB_PORT")
 
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?multiStatements=true&parseTime=true",
-		dbUser, dbPass, dbHost, dbPort, dbName)
+	var dsn string
+
+	if os.Getenv("APP_ENV") == "production" {
+		dsn = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?ssl-mode=REQUIRED&parseTime=true",
+			dbUser, dbPass, dbHost, dbPort, dbName)
+
+	} else {
+		dsn = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?multiStatements=true&parseTime=true",
+			dbUser, dbPass, dbHost, dbPort, dbName)
+	}
 
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
