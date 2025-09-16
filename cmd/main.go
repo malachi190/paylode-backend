@@ -29,7 +29,7 @@ func main() {
 	var dsn string
 
 	if os.Getenv("APP_ENV") == "production" {
-		dsn = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?tls=true&parseTime=true",
+		dsn = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?tls=skip-verify&parseTime=true",
 			dbUser, dbPass, dbHost, dbPort, dbName)
 
 	} else {
